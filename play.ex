@@ -60,38 +60,15 @@ defmodule Board do
      [nil, nil, nil],
      [nil, nil, nil]]
   end
+
+  def unoccupied?(board, row_num, col_num) do
+    Enum.at(board, row_num) |> Enum.at(col_num) == nil
+  end
 end
 
 
-defmodule Game do
-
-  def vertical_winner(board, piece) do
-    Enum.any?([0,1,2], fn(y) -> 
-     Enum.all?(board, fn(x) -> 
-      Enum.at(x, y) == piece
-     end) 
-    end)
-  end
-
-  def horizontal_winner(board, piece) do
-    Enum.any?(board, fn(x) -> 
-     Enum.all?(x, fn(y) -> 
-      y == piece
-     end)
-    end) 
-  end
-
-  def backslash_diagonal_winner(board, piece) do
-    Enum.all?([0, 1, 2], fn(x) -> 
-     Enum.at(Enum.at(board, x), x) == piece
-    end)
-  end
-
-  def forwardslash_diagonal_winner(board, piece) do
-    Enum.all?([0, 1, 2], fn(x) -> 
-     Enum.at(Enum.at(board, x), 2 - x) == piece
-    end)
-  end
+defmodule Winner do
+  alias Winner
 
   def winner?(board, piece) do
     (
@@ -101,12 +78,43 @@ defmodule Game do
       vertical_winner(board, piece)
     )
   end
-
-  def place_piece do
-    IO.gets "\nWhere do you want to place your piece? \n> "
+  
+  def vertical_winner(board, piece) do # shape |
+    Enum.any?([0,1,2], fn(y) -> 
+     Enum.all?(board, fn(x) -> 
+      Enum.at(x, y) == piece
+     end) 
+    end)
   end
 
-  def play(board \\ Board.mapping, piece \\ 'x') do
+  def horizontal_winner(board, piece) do # shape -
+    Enum.any?(board, fn(x) -> 
+     Enum.all?(x, fn(y) -> 
+      y == piece
+     end)
+    end) 
+  end
+
+  def backslash_diagonal_winner(board, piece) do # shape \
+    Enum.all?([0, 1, 2], fn(x) -> 
+     Enum.at(Enum.at(board, x), x) == piece
+    end)
+  end
+
+  def forwardslash_diagonal_winner(board, piece) do # shape /
+    Enum.all?([0, 1, 2], fn(x) -> 
+     Enum.at(Enum.at(board, x), 2 - x) == piece
+    end)
+  end
+
+end
+
+
+defmodule Game do
+
+  def place_piece, do: IO.gets "\nWhere do you want to place your piece? \n> "
+
+  def play(board \\ Board.mapping, piece \\ :x) do
     
     Print.board(board)
 
@@ -118,7 +126,7 @@ defmodule Game do
     col_num = Enum.zip(["A", "B", "C"], [0, 1, 2]) |> Map.new |> Map.get(col_let)
     row_num = String.at(placement, 1) |> String.to_integer
     row_num = row_num - 1
-
+   
     unless Enum.member?(["A", "B", "C"], col_let) do
       IO.puts "Please select columns A, B, or C (like 'A2', 'B3', etc)"
       play(board, piece)
@@ -129,17 +137,15 @@ defmodule Game do
       play(board, piece)
     end
 
-    current_char = Enum.at(board, row_num) |> Enum.at(col_num)
-   
-    unless current_char == nil do
+    unless Board.unoccupied?(board, row_num, col_num) do
       IO.puts "Space is already occupied"
       play(board, piece)
     end
 
     board = List.update_at(board, row_num, fn(x) -> List.update_at(x, col_num, fn(y) -> piece end ) end )
-    if winner?(board, piece), do: IO.puts "\n#{piece} WINS!!\n"
+    if Winner.winner?(board, piece), do: IO.puts "Player piece \n#{piece} wins!\n"
 
-    if piece == 'x', do: piece = 'o', else: piece = 'x'
+    if piece == :x, do: piece = :o, else: piece = :x
     play(board, piece)
   end
   
