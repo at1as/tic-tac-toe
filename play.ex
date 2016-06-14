@@ -1,5 +1,5 @@
-defmodule Board do
-  alias Board
+defmodule Print do
+  alias Print
 
   def separator do
     IO.puts("#{padding}|-----|-----|-----|")
@@ -28,24 +28,28 @@ defmodule Board do
     " #{letter} "
   end
   
-  def print_line(board, max) do
-    print_line(board, max, 0)
+  def line(board, max) do
+    line(board, max, 0)
   end
 
-  def print_line(board, max, idx) when max == idx do
+  def line(board, max, idx) when max == idx do
     separator
   end
 
-  def print_line(board, max, idx) when max > idx do
+  def line(board, max, idx) when max > idx do
     current_row = Enum.at(board, idx)
 
     separator
     columns
     columns(current_row, idx + 1)
     columns
-    print_line(board, max, idx + 1)
+    line(board, max, idx + 1)
   end
 
+  def board(board, max) do
+    header
+    line(board, max)
+  end
 end
 
 defmodule GameLogic do
@@ -102,9 +106,12 @@ defmodule GameLogic do
       IO.puts "Setting up board... \n"
       board = mapping 
     end
+    
+    Print.board(board, 3)
 
     placement = place_piece
 
+    # Input validation and translation
     col_let = String.at(placement, 0) |> String.upcase |> String.replace_trailing("\n", "")
     col_num = Enum.zip(["A", "B", "C"], [0, 1, 2]) |> Map.new |> Map.get(col_let)
     row_num = String.at(placement, 1) |> String.to_integer
@@ -112,28 +119,24 @@ defmodule GameLogic do
     
     unless Enum.member?(["A", "B", "C"], col_let) do
       IO.puts "Please select columns A, B, or C (like 'A2', 'B3', etc)"
-      turns(board)
+      turns(board, piece)
     end
 
     unless Enum.member?([0, 1, 2], row_num) do
       IO.puts "Please select row 1, 2 or 3 (like 'A1', 'B3', etc)"
-      turns(board)
+      turns(board, piece)
     end
 
     current_char = Enum.at(board, row_num) |> Enum.at(col_num)
    
     unless current_char == nil do
       IO.puts "Space is already occupied"
-      turns(board)
+      turns(board, piece)
     end
 
     board = List.update_at(board, row_num, fn(x) -> List.update_at(x, col_num, fn(y) -> piece end ) end )
     if winner?(board, piece), do: IO.puts "\n#{piece} WINS!!\n"
 
-    # Print Board
-    Board.header
-    Board.print_line(board, 3)
-    
     if piece == 'x', do: piece = 'o', else: piece = 'x'
     turns(board, piece)
   end
