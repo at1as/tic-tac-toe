@@ -46,19 +46,24 @@ defmodule Print do
     line(board, max, idx + 1)
   end
 
-  def board(board, max) do
+  def board(board) do
+    row_count = 3
     header
-    line(board, max)
+    line(board, row_count)
   end
 end
 
-defmodule GameLogic do
 
+defmodule Board do
   def mapping do
     [[nil, nil, nil],
      [nil, nil, nil],
      [nil, nil, nil]]
   end
+end
+
+
+defmodule Game do
 
   def vertical_winner(board, piece) do
     Enum.any?([0,1,2], fn(y) -> 
@@ -101,44 +106,41 @@ defmodule GameLogic do
     IO.gets "\nWhere do you want to place your piece? \n> "
   end
 
-  def turns(board \\ nil, piece \\ 'x') do
-    if board == nil do
-      IO.puts "Setting up board... \n"
-      board = mapping 
-    end
+  def play(board \\ Board.mapping, piece \\ 'x') do
     
-    Print.board(board, 3)
+    Print.board(board)
 
     placement = place_piece
 
     # Input validation and translation
+    # TODO: Catch invalid row
     col_let = String.at(placement, 0) |> String.upcase |> String.replace_trailing("\n", "")
     col_num = Enum.zip(["A", "B", "C"], [0, 1, 2]) |> Map.new |> Map.get(col_let)
     row_num = String.at(placement, 1) |> String.to_integer
     row_num = row_num - 1
-    
+
     unless Enum.member?(["A", "B", "C"], col_let) do
       IO.puts "Please select columns A, B, or C (like 'A2', 'B3', etc)"
-      turns(board, piece)
+      play(board, piece)
     end
 
     unless Enum.member?([0, 1, 2], row_num) do
       IO.puts "Please select row 1, 2 or 3 (like 'A1', 'B3', etc)"
-      turns(board, piece)
+      play(board, piece)
     end
 
     current_char = Enum.at(board, row_num) |> Enum.at(col_num)
    
     unless current_char == nil do
       IO.puts "Space is already occupied"
-      turns(board, piece)
+      play(board, piece)
     end
 
     board = List.update_at(board, row_num, fn(x) -> List.update_at(x, col_num, fn(y) -> piece end ) end )
     if winner?(board, piece), do: IO.puts "\n#{piece} WINS!!\n"
 
     if piece == 'x', do: piece = 'o', else: piece = 'x'
-    turns(board, piece)
+    play(board, piece)
   end
   
 end

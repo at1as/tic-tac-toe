@@ -9,7 +9,7 @@ Simple Tic Tac Toe game for Terminal built in Elixir
 ```
 $ git clone https://github.com/at1as/tic-tac-toe
 $ iex play.ex 
-> GameLogic.turns
+> Game.play
 ```
 
 ### Notes
