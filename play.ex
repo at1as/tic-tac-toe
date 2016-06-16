@@ -112,20 +112,28 @@ end
 
 defmodule Game do
 
-  def place_piece, do: IO.gets "\nWhere do you want to place your piece? \n> "
+  def place_piece(piece \\ :x) do
+    IO.gets "\nWhere do you want to place your piece (#{piece})? \n> "
+  end
 
   def play(board \\ Board.mapping, piece \\ :x) do
     
     Print.board(board)
 
-    placement = place_piece
+    placement = place_piece(piece)
 
     # Input validation and translation
-    # TODO: Catch invalid row
     col_let = String.at(placement, 0) |> String.upcase |> String.replace_trailing("\n", "")
     col_num = Enum.zip(["A", "B", "C"], [0, 1, 2]) |> Map.new |> Map.get(col_let)
-    row_num = String.at(placement, 1) |> String.to_integer
-    row_num = row_num - 1
+    row_num = String.at(placement, 1) |> Integer.parse
+
+    if row_num == :error do
+      IO.puts "Please enter a valid row 1, 2, 3 (like 'A1', 'B3', etc)"
+      play(board, piece)
+    else
+      {row_num, _} = row_num
+      row_num = row_num - 1
+    end
    
     unless Enum.member?(["A", "B", "C"], col_let) do
       IO.puts "Please select columns A, B, or C (like 'A2', 'B3', etc)"
@@ -142,11 +150,23 @@ defmodule Game do
       play(board, piece)
     end
 
-    board = List.update_at(board, row_num, fn(x) -> List.update_at(x, col_num, fn(y) -> piece end ) end )
-    if Winner.winner?(board, piece), do: IO.puts "Player piece \n#{piece} wins!\n"
+    # Update board
+    board = List.update_at(board, row_num, fn(x) -> 
+      List.update_at(x, col_num, fn(y) -> 
+       piece 
+      end)
+    end)
 
-    if piece == :x, do: piece = :o, else: piece = :x
-    play(board, piece)
+    if Winner.winner?(board, piece) do
+      Game.won(board, piece)
+    else
+      if piece == :x, do: piece = :o, else: piece = :x
+      play(board, piece)
+    end
   end
-  
+
+  def won(board, piece) do
+    IO.puts "\nPlayer piece #{piece} wins!\n"
+    Print.board(board)
+  end
 end
