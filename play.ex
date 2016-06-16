@@ -64,6 +64,14 @@ defmodule Board do
   def unoccupied?(board, row_num, col_num) do
     Enum.at(board, row_num) |> Enum.at(col_num) == nil
   end
+
+  def full?(board) do
+    Enum.all?(board, fn(row) -> 
+     Enum.all?(row, fn(cell) -> 
+      cell != nil 
+     end)
+    end)
+  end
 end
 
 
@@ -158,15 +166,24 @@ defmodule Game do
     end)
 
     if Winner.winner?(board, piece) do
-      Game.won(board, piece)
+      Game.victory(board, piece)
     else
-      if piece == :x, do: piece = :o, else: piece = :x
-      play(board, piece)
+      if Board.full?(board) do
+        Game.stalemate
+      else
+        if piece == :x, do: piece = :o, else: piece = :x
+        play(board, piece)
+      end
     end
   end
 
-  def won(board, piece) do
-    IO.puts "\nPlayer piece #{piece} wins!\n"
+  def victory(board, piece) do
     Print.board(board)
+    IO.puts "\nPlayer piece #{piece} wins!\n"
+  end
+
+  def stalemate do
+    IO.puts "\n Nobody wins! Starting new game...\n"
+    Game.play
   end
 end
