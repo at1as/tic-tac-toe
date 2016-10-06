@@ -32,7 +32,7 @@ defmodule Print do
     line(board, max, 0)
   end
 
-  def line(board, max, idx) when max == idx do
+  def line(_, max, idx) when max == idx do
     separator
   end
 
@@ -135,12 +135,13 @@ defmodule Game do
     col_num = Enum.zip(["A", "B", "C"], [0, 1, 2]) |> Map.new |> Map.get(col_let)
     row_num = String.at(placement, 1) |> Integer.parse
 
-    if row_num == :error do
-      IO.puts "Please enter a valid row 1, 2, 3 (like 'A1', 'B3', etc)"
-      play(board, piece)
-    else
-      {row_num, _} = row_num
-      row_num = row_num - 1
+    row_num = case row_num do
+      :error ->
+        IO.puts "Please enter a valid row 1, 2, 3 (like 'A1', 'B3', etc)"
+        play(board, piece)
+      _ ->
+        {row_num, _} = row_num
+        row_num - 1
     end
    
     unless Enum.member?(["A", "B", "C"], col_let) do
@@ -160,7 +161,7 @@ defmodule Game do
 
     # Update board
     board = List.update_at(board, row_num, fn(x) -> 
-      List.update_at(x, col_num, fn(y) -> 
+      List.update_at(x, col_num, fn(_) -> 
        piece 
       end)
     end)
@@ -171,7 +172,7 @@ defmodule Game do
       if Board.full?(board) do
         Game.stalemate
       else
-        if piece == :x, do: piece = :o, else: piece = :x
+        piece = if piece == :x, do: :o, else: :x
         play(board, piece)
       end
     end
@@ -180,6 +181,7 @@ defmodule Game do
   def victory(board, piece) do
     Print.board(board)
     IO.puts "\nPlayer piece #{piece} wins!\n"
+    Game.play
   end
 
   def stalemate do
